@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Buttons.cpp">
+    <ClCompile Include="wincalc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
