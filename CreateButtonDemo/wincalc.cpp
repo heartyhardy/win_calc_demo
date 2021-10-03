@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include <wchar.h>
 
+HWND textHandler = 0;
+
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
@@ -20,7 +22,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		wc.lpszClassName,
 		TEXT("Calculator"),
 		WS_OVERLAPPEDWINDOW,
-		
+
 		CW_USEDEFAULT, CW_USEDEFAULT, 310, 350,
 
 		NULL,
@@ -60,8 +62,8 @@ void CreateButton(HWND hWndParent, LPCWSTR lpCaption, int x, int y, int nHeight,
 	);
 }
 
-void CreateText(HWND hWndParent, LPCWSTR lpCaption, int x, int y, int nHeight, int nWidth, int nMenu) {
-	CreateWindowEx(
+HWND CreateText(HWND hWndParent, LPCWSTR lpCaption, int x, int y, int nHeight, int nWidth, int nMenu) {
+	HWND handler = CreateWindowEx(
 		WS_EX_CLIENTEDGE,
 		TEXT("edit"),
 		lpCaption,
@@ -74,6 +76,7 @@ void CreateText(HWND hWndParent, LPCWSTR lpCaption, int x, int y, int nHeight, i
 		NULL,
 		NULL
 	);
+	return handler;
 }
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -103,7 +106,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		CreateButton(hWnd, TEXT("-"), 220, 190, 50, 60, 14);
 		CreateButton(hWnd, TEXT("+"), 220, 250, 50, 60, 15);
 
-		CreateText(hWnd, TEXT("0"), 10, 10, 50, 270, 16);
+		textHandler = CreateText(hWnd, TEXT("0"), 10, 10, 50, 270, 16);
 
 		break;
 	}
@@ -112,19 +115,42 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 	{
 
 		WORD hMenuID = LOWORD(wParam);
-		WCHAR wcMenuID[50];
-		swprintf_s(wcMenuID, 50, L"Button With ID: %d Clicked!", hMenuID);
+		//WCHAR wcMenuID[50];
+		//swprintf_s(wcMenuID, 50, L"Button With ID: %d Clicked!", hMenuID);
 
-		if (hMenuID <= 15) {
-		MessageBox(hWnd, wcMenuID, TEXT("Buttons Demo"), MB_ICONINFORMATION);
-				}
+		//if (hMenuID <= 15) {
+		//	MessageBox(hWnd, wcMenuID, TEXT("Buttons Demo"), MB_ICONINFORMATION);
+		//}
 
+		//int txt_len = GetWindowTextLengthA(textHandler);
+		//WCHAR wcHWND[50];
+		//swprintf_s(wcHWND, 50, L"Text len is: %d", txt_len);
+		//MessageBox(hWnd, wcHWND, TEXT("Buttons Demo"), MB_ICONINFORMATION);
+
+		switch (hMenuID) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		{
+			WCHAR num0[2];
+			swprintf_s(num0, 2, L"%d", hMenuID);
+			SetWindowTextW(textHandler, num0);
+		}
 		break;
+		}
 	}
-	
+	break;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		return 0; 
+		return 0;
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
