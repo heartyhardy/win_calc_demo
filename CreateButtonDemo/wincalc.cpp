@@ -2,6 +2,9 @@
 #include <wchar.h>
 
 HWND textHandler = 0;
+WCHAR wcDisplay[20];
+int nEnd = 1;
+int nCurrent = 0;
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -76,6 +79,10 @@ HWND CreateText(HWND hWndParent, LPCWSTR lpCaption, int x, int y, int nHeight, i
 		NULL,
 		NULL
 	);
+
+	wcDisplay[0] = '0';
+	wcDisplay[1] = '\0';
+
 	return handler;
 }
 
@@ -139,9 +146,24 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		case 8:
 		case 9:
 		{
-			WCHAR num0[2];
-			swprintf_s(num0, 2, L"%d", hMenuID);
-			SetWindowTextW(textHandler, num0);
+			if (nEnd >= 19) {
+				return 0;
+			}
+
+			WCHAR num[2];
+			swprintf_s(num, 2, L"%d", hMenuID);
+
+			if (wcDisplay[0] == '0') {
+				wcDisplay[0] = num[0];
+				wcDisplay[1] = '\0';
+			}
+			else {
+				wcDisplay[nEnd + 1] = '\0';
+				wcDisplay[nEnd] = num[0];
+				nEnd++;
+			}
+
+			SetWindowTextW(textHandler, wcDisplay);
 		}
 		break;
 		}
