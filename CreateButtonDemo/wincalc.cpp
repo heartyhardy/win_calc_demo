@@ -1,10 +1,34 @@
 #include <Windows.h>
 #include <wchar.h>
+#include <string>
+
+enum CURRENT_OPERAND
+{
+	CURRENT_OP_LEFT = 1,
+	CURRENT_OP_RIGHT = 2,
+};
+
+enum Operation
+{
+	OP_NONE,
+	OP_ADD,
+	OP_SUBSTRACT,
+	OP_MULTIPLY,
+	OP_DIVIDE,
+};
 
 HWND textHandler = 0;
-WCHAR wcDisplay[20];
-int nEnd = 1;
-int nCurrent = 0;
+WCHAR wcOpLeft[20];
+WCHAR wcOpRight[20];
+int nCurrentOperand = CURRENT_OP_LEFT;
+int nCurrentOperator = OP_NONE;
+int nEndLeft = 1;
+int nEndRight = 1;
+
+void ResetToLeftOperand();
+int GetArrLenW(WCHAR input[]);
+int GetArrEndPos(WCHAR input[]);
+long ToInt(WCHAR input[], const int size);
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -80,8 +104,10 @@ HWND CreateText(HWND hWndParent, LPCWSTR lpCaption, int x, int y, int nHeight, i
 		NULL
 	);
 
-	wcDisplay[0] = '0';
-	wcDisplay[1] = '\0';
+	wcOpLeft[0] = '0';
+	wcOpLeft[1] = '\0';
+	wcOpRight[0] = '0';
+	wcOpRight[1] = '\0';
 
 	return handler;
 }
@@ -146,27 +172,81 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		case 8:
 		case 9:
 		{
-			if (nEnd >= 19) {
+			if (nEndLeft >= 19 || nEndRight >= 19) {
 				return 0;
 			}
 
+			SetWindowText(textHandler, 0);
+
 			WCHAR num[2];
 			swprintf_s(num, 2, L"%d", hMenuID);
+			if (nCurrentOperand == CURRENT_OP_LEFT) {
+				if (wcOpLeft[0] == '0') {
+					wcOpLeft[0] = num[0];
+					wcOpLeft[1] = '\0';
+				}
+				else {
+					wcOpLeft[nEndLeft + 1] = '\0';
+					wcOpLeft[nEndLeft] = num[0];
+					nEndLeft++;
+				}
 
-			if (wcDisplay[0] == '0') {
-				wcDisplay[0] = num[0];
-				wcDisplay[1] = '\0';
+				SetWindowTextW(textHandler, wcOpLeft);
+
 			}
-			else {
-				wcDisplay[nEnd + 1] = '\0';
-				wcDisplay[nEnd] = num[0];
-				nEnd++;
+			else if (nCurrentOperand == CURRENT_OP_RIGHT) {
+				if (wcOpRight[0] == '0') {
+					wcOpRight[0] = num[0];
+					wcOpRight[1] = '\0';
+				}
+				else {
+					wcOpRight[nEndRight + 1] = '\0';
+					wcOpRight[nEndRight] = num[0];
+					nEndRight++;
+				}
+
+				SetWindowTextW(textHandler, wcOpRight);
 			}
 
-			SetWindowTextW(textHandler, wcDisplay);
 		}
 		break;
+		case 15:
+			if (nCurrentOperand == CURRENT_OP_LEFT) {
+				nCurrentOperand = CURRENT_OP_RIGHT;
+				nCurrentOperator = OP_ADD;
+			}
+			else if (nCurrentOperand == CURRENT_OP_RIGHT) {
+				switch (nCurrentOperator) {
+				case OP_ADD:
+					long nLeft = ToInt(wcOpLeft, GetArrLenW(wcOpLeft));
+					long nRight = ToInt(wcOpRight, GetArrLenW(wcOpRight));
+
+					long nResult = nLeft + nRight;
+
+					//WCHAR buffLen[20];
+					//wsprintf(buffLen, L"%ld", GetArrLenW(wcOpLeft));
+					//MessageBox(hWnd, buffLen, TEXT("test"), 1);
+
+					//WCHAR buff2_1[20];
+					//wsprintf(buff2_1, L"%ld", nLeft);
+					//MessageBox(hWnd, buff2_1, TEXT("test"), 1);
+
+					//WCHAR buff2_2[20];
+					//wsprintf(buff2_2, L"%ld", nRight);
+					//MessageBox(hWnd, buff2_2, TEXT("test"), 1);
+
+					wsprintf(wcOpLeft, L"%ld", nResult);
+
+					ResetToLeftOperand();
+
+					SetWindowText(textHandler, wcOpLeft);
+
+					break;
+				}
+			}
+			break;
 		}
+
 	}
 	break;
 
@@ -178,3 +258,50 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 }
+
+
+long ToInt(WCHAR input[], const int size) {
+	WCHAR* wcToNum = new WCHAR(size);
+
+	for (size_t i = 0; i < size; i++) {
+		wcToNum[i] = input[i];
+	}
+
+	long numOperand = _wtol(wcToNum);
+	return numOperand;
+}
+
+int GetArrLenW(WCHAR input[]) {
+	int nSize = sizeof(input);
+	return nSize;
+}
+
+int GetArrEndPos(WCHAR input[]) {
+	for (size_t i = 0; i < GetArrLenW(input); i++) {
+		if (input[i] == '\0') {
+			return i;
+		}
+	}
+	return GetArrLenW(input);
+}
+
+void ResetToLeftOperand() {
+	wcOpRight[0] = '0';
+	wcOpRight[1] = '\0';
+	nEndLeft = GetArrEndPos(wcOpLeft) + 1;
+	nEndRight = 1;
+	nCurrentOperand = CURRENT_OP_LEFT;
+	nCurrentOperator = OP_NONE;
+}
+
+/*
+	TEST:
+
+	WCHAR buff2_1[20];
+	wsprintf(buff2_1, L"%ld", nLeft);
+	MessageBox(hWnd, buff2_1, TEXT("test"), 1);
+
+	WCHAR buff2_2[20];
+	wsprintf(buff2_2, L"%ld", nRight);
+	MessageBox(hWnd, buff2_2, TEXT("test"), 1);
+*/
